@@ -4,3 +4,4 @@ client.c
 client1.c
 server.c
 server1.c
+.idea/
