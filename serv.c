@@ -84,8 +84,8 @@ int main(int argc, char const *argv[]) {
         char buffer[1024] = {0};
 
         bytesRead = read(socketConn, buffer, 1024);
-        if (bytesRead == 18 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
-            strncpy(redirectMessageForClient, buffer, 18);
+        if (bytesRead > 10 && bytesRead < 25 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
+            strncpy(redirectMessageForClient, buffer, bytesRead);
             //this msg was sent by the mirror, and shall not count as a client connection.
             for (int i = 0; i < IP_LENGTH && buffer[i + 4] != ';'; i++)
                 mirrorIp[i] = buffer[i + 4];
