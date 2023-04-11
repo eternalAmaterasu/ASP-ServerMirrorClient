@@ -26,7 +26,8 @@ void processClient(int socket, char buffer[], long int bytesRead) {
     int cid = fork();
     if (cid == 0) {
         printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
-        send(socket, MIRROR_ACK, strlen(MIRROR_ACK), 0);
+        char *clientMessage = "Monetary case";
+        send(socket, clientMessage, strlen(clientMessage), 0);
         printf("Hello message sent\n");
 
         // closing the connected socket
