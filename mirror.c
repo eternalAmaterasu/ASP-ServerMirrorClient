@@ -14,6 +14,8 @@
 #define MIRROR_PORT 8081
 #define NULL_CH '\0'
 
+int SOCKET_WAITING_QUEUE_SIZE = 3;
+
 char *getCurrentHostIp() {
     int IP_LENGTH = 25;
     char hostName[256];
@@ -76,6 +78,22 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     return -1;
 }
 
+void processClient(int socket, char buffer[], long int bytesRead) {
+    int cid = fork();
+    if (cid == 0) {
+        printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
+        char *clientMessage = "Monetary case from mirror";
+        send(socket, clientMessage, strlen(clientMessage), 0);
+        printf("Hello message sent\n");
+
+        // closing the connected socket
+        close(socket);
+        exit(0);
+    } else {
+        printf("from the root process.. nothing else to do?\n");
+    }
+}
+
 int main(int argc, char const *argv[]) {
     if (argc != 2) {
         printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
@@ -89,6 +107,46 @@ int main(int argc, char const *argv[]) {
         exit(-1);
     }
 
+    int server_fd, socketConn;
+    long int bytesRead;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
 
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) { //AF_INET for IPv4, SOCK_STREAM -- TCP
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(MIRROR_PORT);
+
+    if (bind(server_fd, (struct sockaddr *) &address, sizeof(address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, SOCKET_WAITING_QUEUE_SIZE) < 0) { //limiting to 3 requests in the queue
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Entering listening state now...\n");
+    while (1) {
+        printf("Waiting for accepting..\n");
+        if ((socketConn = accept(server_fd, (struct sockaddr *) &address, (socklen_t *) &addrlen)) < 0) {
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+        char buffer[1024] = {0};
+
+        bytesRead = read(socketConn, buffer, 1024);
+        printf("Accepted a request from the queue..\n");
+        processClient(socketConn, buffer, bytesRead);
+    }
     return 0;
 }
