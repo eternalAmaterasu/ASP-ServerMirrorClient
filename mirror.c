@@ -72,7 +72,7 @@ int registerOntoServer(char *hostIp, char *serverIp) {
         printf("Server registration completed, ready for handling client requests now...\n");
         return 0;
     }
-    printf("Server responded with '%s'... Registration failed..\n", buffer);
+    printf("Server responded with %ld bytes of msg: '%s'... Registration failed..\n", bytesReceived, buffer);
     return -1;
 }
 
