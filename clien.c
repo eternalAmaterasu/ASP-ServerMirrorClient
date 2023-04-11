@@ -16,7 +16,7 @@ int IP_LENGTH = 25;
 int BUFFER_LENGTH = 1024;
 char *mirrorRegistrationStartingMessage = "Mir=";
 
-int connectAndGetFdClient(char *serverIp, int port) {
+int connectAndGetFd(char *serverIp, int port) {
     int fdClient;
     long int bytesReceived;
     struct sockaddr_in serv_addr;
@@ -56,7 +56,7 @@ int main(int argc, char const *argv[]) {
     //int *fdClient = NULL;
     int fdClient;
     char *mirrorIp = malloc(IP_LENGTH * sizeof(char));
-    fdClient = connectAndGetFdClient(serverIp, SERVER_PORT);
+    fdClient = connectAndGetFd(serverIp, SERVER_PORT);
 
     char *buffer = malloc(BUFFER_LENGTH * sizeof(char));
     cleanBuffer(buffer);
@@ -74,16 +74,14 @@ int main(int argc, char const *argv[]) {
             mirrorIp[i] = buffer[i + 4];
 
         printf("Rerouting to connect to the mirror...\n");
-        fdClient = connectAndGetFdClient(mirrorIp, MIRROR_PORT);
+        fdClient = connectAndGetFd(mirrorIp, MIRROR_PORT);
 
         send(fdClient, initMsg, strlen(initMsg), 0);
         cleanBuffer(buffer);
         bytesReceived = read(fdClient, buffer, 1024);
     }
     printf("client received %ld bytes with data being '%s'..\n", bytesReceived, buffer);
-
-    sleep(5);
-    printf("client bye\n");
+    
     // closing the connected socket
     close(fdClient);
     return 0;

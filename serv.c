@@ -23,8 +23,7 @@ int decideConnectionServer(int connectionNumber) {
 }
 
 void processClient(int socket, char buffer[], long int bytesRead) {
-    int cid = fork();
-    if (cid == 0) {
+    if (!fork()) {
         printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
         char *clientMessage = "Monetary case from server";
         send(socket, clientMessage, strlen(clientMessage), 0);
@@ -33,8 +32,6 @@ void processClient(int socket, char buffer[], long int bytesRead) {
         // closing the connected socket
         close(socket);
         exit(0);
-    } else {
-        printf("from the root process.. nothing else to do?\n");
     }
 }
 
