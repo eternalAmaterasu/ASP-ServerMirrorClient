@@ -49,7 +49,7 @@ void cleanBuffer(char data[]) {
 
 int main(int argc, char const *argv[]) {
     if (argc != 2) {
-        printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
+        printf("Cannot start client. Need server's IP address as the 1st parameter...\n");
         exit(0);
     }
     char *serverIp = argv[1];
