@@ -29,21 +29,12 @@ char *getCurrentHostIp() {
     return ip;
 }
 
-int main(int argc, char const *argv[]) {
-    if (argc != 2) {
-        printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
-        exit(0);
-    }
-    char *serverIp = argv[1];
-
-    char *ip = getCurrentHostIp();
-    printf("The current mirror host ip is: %s\n", ip);
-
-    int ipLength = (int) strlen(ip);
+int registerOntoServer(char *hostIp, char *serverIp) {
+    int ipLength = (int) strlen(hostIp);
     char initMsg[31] = {NULL_CH};
     strncpy(initMsg, "Mir=", 4);
     int i = 0;
-    for (; i < ipLength; i++) initMsg[i + 4] = ip[i];
+    for (; i < ipLength; i++) initMsg[i + 4] = hostIp[i];
     initMsg[i + 4] = ';';
     printf("initmsg => %s, length: %lu\n", initMsg, strlen(initMsg));
 
@@ -74,15 +65,30 @@ int main(int argc, char const *argv[]) {
 
     printf("Initiating server registration...\n");
     send(fd_mirror_client, initMsg, strlen(initMsg), 0);
-    printf("Hello message sent\n");
     bytesReceived = read(fd_mirror_client, buffer, 1024);
-    printf("Received %ld bytes of data from server...\n", bytesReceived);
-    printf("%s\n", buffer);
+    close(fd_mirror_client);
+
     if (strcmp(buffer, "OK") == 0) {
         printf("Server registration completed, ready for handling client requests now...\n");
+        return 0;
+    }
+    printf("Server responded with '%s'... Registration failed..\n", buffer);
+    return -1;
+}
+
+int main(int argc, char const *argv[]) {
+    if (argc != 2) {
+        printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
+        exit(0);
+    }
+    char *serverIp = argv[1];
+
+    char *ip = getCurrentHostIp();
+    printf("The current mirror host ip is: %s\n", ip);
+    if (registerOntoServer(ip, serverIp) < 0) {
+        exit(-1);
     }
 
-    // closing the connected socket
-    close(fd_mirror_client);
+
     return 0;
 }
