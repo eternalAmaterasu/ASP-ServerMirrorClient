@@ -313,7 +313,8 @@ void process_command(int socket, char input_string[]) {
 void processClient(int socket, char buffer[], long int bytesRead) {
     int pid = fork();
     if (pid == 0) {
-        printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
+        printf("\nSERVER(%d): Connected with client\n", getpid());
+        //printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
         send(socket, CLIENT_ACK, strlen(CLIENT_ACK), 0);
         while (1) {
             char input_string[2056] = {0};
