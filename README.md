@@ -1,5 +1,5 @@
-Working server => serv.c
+Working server => server.c
 
 Working mirror => mirror.c
 
-Working client => clien.c
+Working client => client.c
