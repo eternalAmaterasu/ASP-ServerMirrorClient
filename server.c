@@ -98,6 +98,7 @@ void cleanBuffer(char data[]) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
+    printf("input => %s\n", input_string); //todo del
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     if (strcmp(words[0], "findfile") == 0) {
