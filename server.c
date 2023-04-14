@@ -6,9 +6,6 @@
 #include <time.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdbool.h>
 #include <fcntl.h>
 #include <unistd.h>
