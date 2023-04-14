@@ -307,6 +307,7 @@ int main(int argc, char const *argv[]) {
 
         bytesRead = read(socketConn, buffer, 1024);
         if (bytesRead > 10 && bytesRead < 40 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
+            cleanBufferWithLength(redirectMessageForClient, strlen(redirectMessageForClient));
             strncpy(redirectMessageForClient, buffer, bytesRead);
             //this msg was sent by the mirror, and shall not count as a client connection.
             int isMirrorDead = 0;
@@ -320,7 +321,7 @@ int main(int argc, char const *argv[]) {
 
             if (isMirrorDead) {
                 printf("Deregistered mirror ip as mirror is dead\n");
-                cleanBufferWithLength(mirrorIp, IP_LENGTH);
+                cleanBufferWithLength(mirrorIp, strlen(mirrorIp));
             } else {
                 printf("Registered mirror ip as: %s, of length: %lu\n", mirrorIp, strlen(mirrorIp));
             }

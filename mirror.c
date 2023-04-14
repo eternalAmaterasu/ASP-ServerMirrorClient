@@ -105,10 +105,10 @@ int registerOntoServer(char *hostIp, char *serverIp) {
 }
 
 void deregisterFromServer() {
-    char lastMsg[31] = {NULL_CH};
+    char lastMsg[20] = {NULL_CH};
     strncpy(lastMsg, "Mir=", 4);
     int i = 0;
-    for (; i < 31; i++) lastMsg[i + 4] = '-';
+    for (; i < 20-4-1; i++) lastMsg[i + 4] = '-';
     lastMsg[i + 4] = ';';
     printf("lastmsg => %s, length: %lu\n", lastMsg, strlen(lastMsg));
 
