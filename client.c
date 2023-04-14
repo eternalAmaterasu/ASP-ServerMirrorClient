@@ -19,6 +19,7 @@ int IP_LENGTH = 25;
 int BUFFER_LENGTH = 1024;
 char *mirrorRegistrationStartingMessage = "Mir=";
 char *CLIENT_ACK = "Hi";
+char *REJECT_CLIENT = "No";
 
 void receive_file(int sockfd) {
     char buffer[BUFFER_LENGTH];
@@ -417,6 +418,7 @@ int main(int argc, char const *argv[]) {
     printf("Initiating server contact, with fdclient as %d...\n", fdClient);
     send(fdClient, CLIENT_ACK, strlen(CLIENT_ACK), 0);
     bytesReceived = read(fdClient, buffer, 1024);
+    printf("client received %ld bytes with data being '%s'..\n", bytesReceived, buffer);
 
     if (bytesReceived > 10 && bytesReceived < 25 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
         close(fdClient);
@@ -430,8 +432,10 @@ int main(int argc, char const *argv[]) {
         send(fdClient, CLIENT_ACK, strlen(CLIENT_ACK), 0);
         cleanBuffer(buffer);
         bytesReceived = read(fdClient, buffer, 1024);
+    } else if (strcmp(REJECT_CLIENT, buffer) == 0) {
+        printf("Client cannot start operation as server is not ready yet to accept connections, due to lack of mirror...\n");
+        exit(0);
     }
-    printf("client received %ld bytes with data being '%s'..\n", bytesReceived, buffer);
 
     char input_string[1024];
     while (1) {

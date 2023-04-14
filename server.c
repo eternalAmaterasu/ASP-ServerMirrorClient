@@ -32,6 +32,7 @@ char *redirectMessageForClient = NULL;
 char *mirrorRegistrationStartingMessage = "Mir=";
 char *MIRROR_ACK = "OK";
 char *CLIENT_ACK = "Hi";
+char *REJECT_CLIENT = "No";
 
 void send_file(int sockfd) {
     char buffer[BUFFER_LENGTH];
@@ -311,6 +312,13 @@ int main(int argc, char const *argv[]) {
 
             send(socketConn, MIRROR_ACK, strlen(MIRROR_ACK), 0);
             printf("Registered mirror ip as: %s, of length: %lu\n", mirrorIp, strlen(mirrorIp));
+            close(socketConn);
+            continue;
+        }
+
+        if (strlen(mirrorIp) == 0) {
+            printf("Cannot service client requests as mirror is yet not connected..\n");
+            send(socketConn, REJECT_CLIENT, strlen(REJECT_CLIENT), 0);
             close(socketConn);
             continue;
         }
