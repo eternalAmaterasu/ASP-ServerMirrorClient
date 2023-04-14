@@ -90,8 +90,12 @@ void trim(char *str) {
     *(end + 1) = '\0';
 }
 
+void cleanBufferWithLength(char data[], int length) {
+    for (int i = 0; i < length; i++) data[i] = NULL_CH;
+}
+
 void cleanBuffer(char data[]) {
-    for (int i = 0; i < BUFFER_LENGTH; i++) data[i] = NULL_CH;
+    cleanBufferWithLength(data, BUFFER_LENGTH);
 }
 
 void process_command(int socket, char input_string[]) {
@@ -304,14 +308,25 @@ int main(int argc, char const *argv[]) {
         char buffer[1024] = {0};
 
         bytesRead = read(socketConn, buffer, 1024);
-        if (bytesRead > 10 && bytesRead < 25 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
+        if (bytesRead > 10 && bytesRead < 40 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
             strncpy(redirectMessageForClient, buffer, bytesRead);
             //this msg was sent by the mirror, and shall not count as a client connection.
-            for (int i = 0; i < IP_LENGTH && buffer[i + 4] != ';'; i++)
+            int isMirrorDead = 0;
+            for (int i = 0; i < IP_LENGTH && buffer[i + 4] != ';'; i++) {
                 mirrorIp[i] = buffer[i + 4];
+                if (mirrorIp[i] == '-') {
+                    isMirrorDead = 1;
+                    break;
+                }
+            }
 
+            if (isMirrorDead) {
+                printf("Deregistered mirror ip as mirror is dead\n");
+                cleanBufferWithLength(mirrorIp, IP_LENGTH);
+            } else {
+                printf("Registered mirror ip as: %s, of length: %lu\n", mirrorIp, strlen(mirrorIp));
+            }
             send(socketConn, MIRROR_ACK, strlen(MIRROR_ACK), 0);
-            printf("Registered mirror ip as: %s, of length: %lu\n", mirrorIp, strlen(mirrorIp));
             close(socketConn);
             continue;
         }

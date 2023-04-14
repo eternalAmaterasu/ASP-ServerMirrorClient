@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #define SERVER_PORT 8080
 #define MIRROR_PORT 8081
@@ -17,6 +18,7 @@
 int SOCKET_WAITING_QUEUE_SIZE = 3;
 int BUFFER_LENGTH = 1024;
 char *MIRROR_ACK = "OK";
+char *serverIpInstance;
 
 char *getCurrentHostIp() {
     int IP_LENGTH = 25;
@@ -77,7 +79,7 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     char *buffer = malloc(BUFFER_LENGTH * sizeof(char));
     cleanBuffer(buffer);
 
-    printf("Initiating server registration...\n");
+    printf("Initiating server connection / registration...\n");
     send(fd_mirror_client, initMsg, strlen(initMsg), 0);
     bytesReceived = read(fd_mirror_client, buffer, BUFFER_LENGTH);
     close(fd_mirror_client);
@@ -88,6 +90,21 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     }
     printf("Server responded with %ld bytes of msg: '%s'... Registration failed..\n", bytesReceived, buffer);
     return -1;
+}
+
+void deregisterFromServer() {
+    char lastMsg[31] = {NULL_CH};
+    strncpy(lastMsg, "Mir=", 4);
+    int i = 0;
+    for (; i < 31; i++) lastMsg[i + 4] = '-';
+    lastMsg[i + 4] = ';';
+    printf("lastmsg => %s, length: %lu\n", lastMsg, strlen(lastMsg));
+
+    int fd_mirror_client = connectAndGetFd(serverIpInstance, SERVER_PORT);
+    printf("Initiating mirror deregistration...\n");
+    send(fd_mirror_client, lastMsg, strlen(lastMsg), 0);
+    printf("Mirror deregistered...\n");
+    close(fd_mirror_client);
 }
 
 void processClient(int socket, char buffer[], long int bytesRead) {
@@ -103,6 +120,11 @@ void processClient(int socket, char buffer[], long int bytesRead) {
     }
 }
 
+void handleInterrupt() {
+    deregisterFromServer();
+    exit(0);
+}
+
 int main(int argc, char const *argv[]) {
     if (argc != 2) {
         printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
@@ -114,6 +136,9 @@ int main(int argc, char const *argv[]) {
     if (registerOntoServer(ip, serverIp) < 0) {
         exit(-1);
     }
+    serverIpInstance = malloc(strlen(serverIp) * sizeof(char));
+    strcpy(serverIpInstance, serverIp);
+    signal(SIGINT, handleInterrupt);
 
     int server_fd, socketConn;
     long int bytesRead;
