@@ -177,6 +177,7 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                     printf("\nInvalid command.\n");
                     return 1;
                 }
+                num_tokens++;
             } else if (pos == 1) {
                 strncpy(size1, input_string + token_start, i - token_start);
                 size1[i - token_start] = '\0';
@@ -184,6 +185,7 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                     printf("\nInvalid size1.\n");
                     return 1;
                 }
+                num_tokens++;
             } else if (pos == 2) {
                 strncpy(size2, input_string + token_start, i - token_start);
                 size2[i - token_start] = '\0';
@@ -191,6 +193,7 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                     printf("\nInvalid size2.\n");
                     return 1;
                 }
+                num_tokens++;
             } else if (pos == 3) {
                 if (strcmp(input_string + token_start, "-u") == 0) {
                     has_u_flag = true;
@@ -198,6 +201,7 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                     printf("\nInvalid flag.\n");
                     return 1;
                 }
+                num_tokens++;
             } else {
                 printf("\nToo many arguments.\n");
                 return 1;
@@ -205,6 +209,10 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
             token_start = i + 1;
             pos++;
         }
+    }
+    if(num_tokens<3){
+    	printf("\nIncorrect Syntax\n");
+    	return 1;
     }
     long size1_value = atol(size1);
     long size2_value = atol(size2);
