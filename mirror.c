@@ -68,6 +68,11 @@ char *ffbe = "#!/bin/bash\n"
              "fi\n"
              "";
 
+/**
+ *
+ * @param data
+ * @param nameOfFile
+ */
 void generateFile(char *data, char *nameOfFile) {
     int fd = open(nameOfFile, O_TRUNC | O_CREAT | O_RDWR, 0700);
     for (int i = 0; i < strlen(data); i++) {
@@ -80,6 +85,10 @@ void generateFile(char *data, char *nameOfFile) {
     close(fd);
 }
 
+/**
+ *
+ * @return
+ */
 char *getCurrentHostIp() {
     int IP_LENGTH = 25;
     char hostName[256];
@@ -95,6 +104,12 @@ char *getCurrentHostIp() {
     return ip;
 }
 
+/**
+ *
+ * @param serverIp
+ * @param port
+ * @return
+ */
 int connectAndGetFd(char *serverIp, int port) {
     int fdClient;
     struct sockaddr_in serv_addr;
@@ -121,14 +136,29 @@ int connectAndGetFd(char *serverIp, int port) {
     return fdClient;
 }
 
+/**
+ *
+ * @param data
+ * @param length
+ */
 void cleanBufferWithLength(char data[], int length) {
     for (int i = 0; i < length; i++) data[i] = NULL_CH;
 }
 
+/**
+ *
+ * @param data
+ */
 void cleanBuffer(char data[]) {
     cleanBufferWithLength(data, BUFFER_LENGTH);
 }
 
+/**
+ *
+ * @param hostIp
+ * @param serverIp
+ * @return
+ */
 int registerOntoServer(char *hostIp, char *serverIp) {
     int ipLength = (int) strlen(hostIp);
     char initMsg[31] = {NULL_CH};
@@ -156,6 +186,9 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     return -1;
 }
 
+/**
+ *
+ */
 void deregisterFromServer() {
     char lastMsg[20] = {NULL_CH};
     strncpy(lastMsg, "Mir=", 4);
@@ -171,6 +204,10 @@ void deregisterFromServer() {
     close(fd_mirror_client);
 }
 
+/**
+ *
+ * @param sockfd
+ */
 void send_file(int sockfd) {
     char buffer[BUFFER_LENGTH];
 
@@ -200,7 +237,12 @@ void send_file(int sockfd) {
     fclose(file);
 }
 
-
+/**
+ *
+ * @param input_string
+ * @param words
+ * @return
+ */
 int split_words(char input_string[], char words[MAX_WORDS][MAX_WORD_LENGTH]) {
     int word_count = 0;
     char *ptr = input_string;
@@ -217,6 +259,10 @@ int split_words(char input_string[], char words[MAX_WORDS][MAX_WORD_LENGTH]) {
     return word_count;
 }
 
+/**
+ *
+ * @param str
+ */
 void trim(char *str) {
     char *start, *end;
     for (start = str; *start && isspace(*start); ++start);
@@ -227,6 +273,11 @@ void trim(char *str) {
     *(end + 1) = '\0';
 }
 
+/**
+ *
+ * @param socket
+ * @param input_string
+ */
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
@@ -363,6 +414,12 @@ void process_command(int socket, char input_string[]) {
     }
 }
 
+/**
+ *
+ * @param socket
+ * @param buffer
+ * @param bytesRead
+ */
 void processClient(int socket, char buffer[], long int bytesRead) {
     int pid = fork();
     if (pid == 0) {
@@ -389,6 +446,9 @@ void processClient(int socket, char buffer[], long int bytesRead) {
     close(socket);
 }
 
+/**
+ *
+ */
 void handleInterrupt() {
     deregisterFromServer();
     exit(0);

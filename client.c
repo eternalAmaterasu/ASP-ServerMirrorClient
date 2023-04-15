@@ -20,6 +20,10 @@ char *mirrorRegistrationStartingMessage = "Mir=";
 char *CLIENT_ACK = "Hi";
 char *REJECT_CLIENT = "No";
 
+/**
+ *
+ * @param sockfd
+ */
 void receive_file(int sockfd) {
     char buffer[BUFFER_LENGTH];
 
@@ -43,20 +47,40 @@ void receive_file(int sockfd) {
     fclose(file);
 }
 
-
+/**
+ *
+ * @param filename
+ * @return
+ */
 bool is_valid_filename(const char *filename) {
     return strlen(filename) > 0;
 }
 
+/**
+ *
+ * @param extension
+ * @return
+ */
 bool is_valid_extension(const char *extension) {
     return strlen(extension) > 0;
 }
 
+/**
+ *
+ * @param date_str
+ * @param date
+ * @return
+ */
 bool parse_date(const char *date_str, struct tm *date) {
     char *result = strptime(date_str, "%Y-%m-%d", date);
     return result != NULL && *result == '\0';
 }
 
+/**
+ *
+ * @param number
+ * @return
+ */
 bool is_valid_number(const char *number) {
     for (int i = 0; number[i]; ++i) {
         if (!isdigit(number[i])) {
@@ -66,6 +90,10 @@ bool is_valid_number(const char *number) {
     return true;
 }
 
+/**
+ *
+ * @param str
+ */
 void trim(char *str) {
     char *start, *end;
     for (start = str; *start && isspace(*start); ++start);
@@ -76,6 +104,11 @@ void trim(char *str) {
     *(end + 1) = '\0';
 }
 
+/**
+ *
+ * @param input_string
+ * @return
+ */
 int check_findfile(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid
 {
     char command[1024];
@@ -113,6 +146,11 @@ int check_findfile(char input_string[]) // returns 1 if invalid syntax, returns 
     return 0;
 }
 
+/**
+ *
+ * @param input_string
+ * @return
+ */
 int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid and there's -u option and returns 2 if syntax is valid and there's no -u option
 {
     char command[1024];
@@ -171,6 +209,11 @@ int check_sgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
     return 0;
 }
 
+/**
+ *
+ * @param input_string
+ * @return
+ */
 int check_dgetfiles(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid and there's -u option and returns 2 if syntax is valid and there's no -u option
 {
     char command[1024];
@@ -212,7 +255,11 @@ int check_dgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
     return 0;
 }
 
-
+/**
+ *
+ * @param input_string
+ * @return
+ */
 int check_getfiles(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid and there's -u option and returns 2 if syntax is valid and there's no -u option
 {
     char command[1024];
@@ -261,6 +308,11 @@ int check_getfiles(char input_string[]) // returns 1 if invalid syntax, returns 
     return 0;
 }
 
+/**
+ *
+ * @param input_string
+ * @return
+ */
 int check_gettargz(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid and there's -u option and returns 2 if syntax is valid and there's no -u option
 {
     char command[1024];
@@ -308,6 +360,12 @@ int check_gettargz(char input_string[]) // returns 1 if invalid syntax, returns 
     return 0;
 }
 
+/**
+ *
+ * @param input_string
+ * @param command
+ * @return
+ */
 char *check_command(char input_string[], char *command) // returns command name if it's valid else prints appropriate error message and returns NULL
 {
     command = malloc(sizeof(char) * 1024);
@@ -368,6 +426,12 @@ char *check_command(char input_string[], char *command) // returns command name 
     return (command);
 }
 
+/**
+ *
+ * @param serverIp
+ * @param port
+ * @return
+ */
 int connectAndGetFd(char *serverIp, int port) {
     int fdClient;
     long int bytesReceived;
@@ -395,6 +459,10 @@ int connectAndGetFd(char *serverIp, int port) {
     return fdClient;
 }
 
+/**
+ *
+ * @param data
+ */
 void cleanBuffer(char data[]) {
     for (int i = 0; i < BUFFER_LENGTH; i++) data[i] = NULL_CH;
 }
