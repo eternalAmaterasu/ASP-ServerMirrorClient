@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE
+#define _POSIX_C_SOURCE 200809L
 
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -19,6 +20,14 @@ int BUFFER_LENGTH = 1024;
 char *mirrorRegistrationStartingMessage = "Mir=";
 char *CLIENT_ACK = "Hi";
 char *REJECT_CLIENT = "No";
+
+/**
+ * Fill the @param data[] with '\0' upto BUFFER_LENGTH
+ * @param data
+ */
+void cleanBuffer(char data[]) {
+    for (int i = 0; i < BUFFER_LENGTH; i++) data[i] = NULL_CH;
+}
 
 /**
  * Receive the temp.tar.gz from server / mirror as temp_client.tar.gz using socket @param sockfd
@@ -229,7 +238,8 @@ int check_dgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                 time_t date2_time = mktime(&date2);
                 if (date1_time <= date2_time) {
                     if (strcmp(optional_flag, "-u") != 0) {
-                        return 2;
+                    	printf("\nIncorrect optional flag\n");
+                        return 1;
                     } else if (strcmp(optional_flag, "-u") == 0) {
                         return 0;
                     } else if (optional_flag[0] != '\0') {
@@ -307,6 +317,70 @@ int check_getfiles(char input_string[]) // returns 1 if invalid syntax, returns 
     }
     return 0;
 }
+/**
+ *
+ * @param input_string
+ * @return
+
+ */
+char *process_extensions(const char *input) {
+    const char *delim = " ";
+    char *input_copy = strdup(input);
+    char *command = NULL;
+    char *extensions[6] = {0};
+    int ext_count = 0;
+    bool duplicate_found = false;
+
+    char *token = input_copy;
+    while (*token) {
+        if (ext_count == 0) {
+            command = token;
+            while (*token && *token != *delim) token++;
+            if (*token) {
+                *token = '\0';
+                token++;
+            }
+        } else {
+            extensions[ext_count - 1] = token;
+            while (*token && *token != *delim) token++;
+            if (*token) {
+                *token = '\0';
+                token++;
+            }
+
+            for (int i = 0; i < ext_count - 1; i++) {
+                if (strcmp(extensions[i], extensions[ext_count - 1]) == 0) {
+                    duplicate_found = true;
+                }
+            }
+        }
+        ext_count++;
+    }
+
+    if (!duplicate_found) {
+        free(input_copy);
+        return NULL;
+    }
+
+    char *result = (char *)malloc(1024);
+    strcpy(result, command);
+    for (int i = 0; i < ext_count - 1; i++) {
+        bool already_added = false;
+        for (int j = 0; j < i; j++) {
+            if (strcmp(extensions[i], extensions[j]) == 0) {
+                already_added = true;
+                break;
+            }
+        }
+        if (!already_added) {
+            strcat(result, " ");
+            strcat(result, extensions[i]);
+        }
+    }
+
+    free(input_copy);
+    return result;
+}
 
 /**
  *
@@ -315,6 +389,14 @@ int check_getfiles(char input_string[]) // returns 1 if invalid syntax, returns 
  */
 int check_gettargz(char input_string[]) // returns 1 if invalid syntax, returns 0 if syntax is valid and there's -u option and returns 2 if syntax is valid and there's no -u option
 {
+    char *unique_extensions_command = process_extensions(input_string); 
+    if(unique_extensions_command != NULL)
+    	{
+    		printf("\nEntered command contained duplicate extensions. Proceeding ahead with command: %s\n",unique_extensions_command);
+    		cleanBuffer(input_string);
+    		strcpy(input_string,unique_extensions_command);
+    	}
+    //printf("\nProceeding ahead with command: %s\n",input_string);
     char command[1024];
     char extensions[6][1024];
     bool has_u_flag = false;
@@ -457,13 +539,6 @@ int connectAndGetFd(char *serverIp, int port) {
     return fdClient;
 }
 
-/**
- * Fill the @param data[] with '\0' upto BUFFER_LENGTH
- * @param data
- */
-void cleanBuffer(char data[]) {
-    for (int i = 0; i < BUFFER_LENGTH; i++) data[i] = NULL_CH;
-}
 
 int main(int argc, char const *argv[]) {
     if (argc != 2) {
@@ -472,7 +547,8 @@ int main(int argc, char const *argv[]) {
     }
 
     printf("**** WELCOME TO CLIENT OF COMP-8567 PROJECT ****\n");
-    char *serverIp = argv[1];
+    char *serverIp = malloc(sizeof(argv[1]));
+    strcpy(serverIp,argv[1]);
     //int *fdClient = NULL;
     int fdClient;
     char *mirrorIp = malloc(IP_LENGTH * sizeof(char));

@@ -247,7 +247,6 @@ void process_command(int socket, char input_string[]) {
         send_file(socket);
         //system("rm -f temp.tar.gz");
     } else if (strcmp(words[0], "getfiles") == 0) {
-        system("rm -f output.txt");
         system("chmod +x ./find_files_by_name.sh");
         char command[1024] = {0};
         strcat(command, "./find_files_by_name.sh ");
@@ -257,44 +256,6 @@ void process_command(int socket, char input_string[]) {
                 strcat(command, " ");
             }
         }
-        strcat(command, " > output.txt");
-        printf("\nCommand: %s\n", command);
-        system("rm -f temp.tar.gz");
-        FILE *pipe = popen(command, "r");
-        if (pipe == NULL) {
-            printf("\nError: Could Not Execute find Command\n");
-            char error_message[] = "Some error occurred while processing the request";
-            strcpy(output_message, error_message);
-        }
-        pclose(pipe);
-        int fd = open("output.txt", O_RDONLY);
-        char buffer[2056] = {0};
-        int bytes_read = read(fd, buffer, 2056);
-        close(fd);
-        cleanBuffer(output_message);
-        trim(buffer);
-        if (strcmp(buffer, "temp.tar.gz created with the found files.") == 0) {
-            strcpy(output_message, "File found");
-            send(socket, output_message, strlen(output_message), 0);
-            send_file(socket);
-        } else {
-            strcpy(output_message, "No file found");
-            send(socket, output_message, strlen(output_message), 0);
-        }
-        //system("rm -f temp.tar.gz");
-        //system("rm -f output.txt");
-    } else if (strcmp(words[0], "gettargz") == 0) {
-        system("rm -f output.txt");
-        system("chmod +x ./find_files_by_extension.sh");
-        char command[1024] = {0};
-        strcat(command, "./find_files_by_extension.sh ");
-        for (int i = 1; i < word_count; i++) {
-            if (strcmp(words[i], "-u") != 0) {
-                strcat(command, words[i]);
-                strcat(command, " ");
-            }
-        }
-        printf("\nCommand: %s\n", command);
         system("rm -f temp.tar.gz");
         FILE *pipe = popen(command, "r");
         if (pipe == NULL) {
@@ -307,13 +268,45 @@ void process_command(int socket, char input_string[]) {
         int file_exists = stat("./temp.tar.gz", &buffer) == 0;
         cleanBuffer(output_message);
         if (file_exists) {
-            strcpy(output_message, "File found");
-            trim(output_message);
-            send(socket, output_message, strlen(output_message), 0);
+            char msg[] = "File found";
+            send(socket, msg, strlen(msg), 0);
+            sleep(1);
             send_file(socket);
         } else {
-            strcpy(output_message, "No file found");
-            send(socket, output_message, strlen(output_message), 0);
+            char msg[] = "No file found";
+            send(socket, msg, strlen(msg), 0);
+        }
+        //system("rm -f temp.tar.gz");
+        //system("rm -f output.txt");
+    } else if (strcmp(words[0], "gettargz") == 0) {
+        system("chmod +x ./find_files_by_extension.sh");
+        char command[1024] = {0};
+        strcat(command, "./find_files_by_extension.sh ");
+        for (int i = 1; i < word_count; i++) {
+            if (strcmp(words[i], "-u") != 0) {
+                strcat(command, words[i]);
+                strcat(command, " ");
+            }
+        }
+        system("rm -f temp.tar.gz");
+        FILE *pipe = popen(command, "r");
+        if (pipe == NULL) {
+            printf("\nError: Could Not Execute find Command\n");
+            char error_message[] = "Some error occurred while processing the request";
+            strcpy(output_message, error_message);
+        }
+        pclose(pipe);
+        struct stat buffer;
+        int file_exists = stat("./temp.tar.gz", &buffer) == 0;
+        cleanBuffer(output_message);
+        if (file_exists) {
+            char msg[] = "File found";
+            send(socket, msg, strlen(msg), 0);
+            sleep(1);
+            send_file(socket);
+        } else {
+            char msg[] = "No file found";
+            send(socket, msg, strlen(msg), 0);
         }
         //system("rm -f temp.tar.gz");
         //system("rm -f output.txt");
