@@ -118,17 +118,14 @@ int connectAndGetFd(char *serverIp, int port) {
         printf("\n Socket creation error \n");
         exit(-1);
     }
-    printf("Socket creation complete for client...\n");
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
-
     if (inet_pton(AF_INET, serverIp, &serv_addr.sin_addr) <= 0) {
         printf("\nInvalid address/ Address not supported \n");
         exit(-1);
     }
 
-    printf("Attempting server registration now...\n");
     if ((connect(fdClient, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
         printf("\nConnection Failed \n");
         exit(-1);
@@ -166,7 +163,7 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     int i = 0;
     for (; i < ipLength; i++) initMsg[i + 4] = hostIp[i];
     initMsg[i + 4] = ';';
-    printf("initmsg => %s, length: %lu\n", initMsg, strlen(initMsg));
+    printf("Data to send to server => '%s', length: %lu\n", initMsg, strlen(initMsg));
 
     int fd_mirror_client = connectAndGetFd(serverIp, SERVER_PORT);
     long int bytesReceived;
@@ -179,10 +176,10 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     close(fd_mirror_client);
 
     if (strcmp(buffer, MIRROR_ACK) == 0) {
-        printf("Server registration completed, ready for handling client requests now...\n");
+        printf("Server registration completed, ready for handling client requests now...\n\n");
         return 0;
     }
-    printf("Server responded with %ld bytes of msg: '%s'... Registration failed..\n", bytesReceived, buffer);
+    printf("Server responded with %ld bytes of msg: '%s'... Registration failed.\n\n", bytesReceived, buffer);
     return -1;
 }
 
@@ -193,14 +190,14 @@ void deregisterFromServer() {
     char lastMsg[20] = {NULL_CH};
     strncpy(lastMsg, "Mir=", 4);
     int i = 0;
-    for (; i < 20-4-1; i++) lastMsg[i + 4] = '-';
+    for (; i < 20 - 4 - 1; i++) lastMsg[i + 4] = '-';
     lastMsg[i + 4] = ';';
-    printf("lastmsg => %s, length: %lu\n", lastMsg, strlen(lastMsg));
+    printf("\nDeregistration data to send to server => '%s'\n", lastMsg);
 
     int fd_mirror_client = connectAndGetFd(serverIpInstance, SERVER_PORT);
     printf("Initiating mirror deregistration...\n");
     send(fd_mirror_client, lastMsg, strlen(lastMsg), 0);
-    printf("Mirror deregistered...\n");
+    printf("Mirror deregistered...\n\n");
     close(fd_mirror_client);
 }
 
@@ -281,7 +278,7 @@ void trim(char *str) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
-    printf("input => %s\n", input_string); //todo del
+    printf("\n(%d) Processing command => '%s'\n", getpid(), input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     if (strcmp(words[0], "findfile") == 0) {
@@ -412,6 +409,7 @@ void process_command(int socket, char input_string[]) {
         //system("rm -f temp.tar.gz");
         //system("rm -f output.txt");
     }
+    printf("(%d) Processed command => '%s'\n", getpid(), input_string);
 }
 
 /**
@@ -462,9 +460,12 @@ int main(int argc, char const *argv[]) {
         printf("Cannot start mirror. Need server's IP address as the 1st parameter...\n");
         exit(0);
     }
+
+    printf("**** WELCOME TO MIRROR OF COMP-8567 PROJECT ****\n");
+    printf("Mirror started with process id: %d\n", getpid());
     char *serverIp = argv[1];
     char *ip = getCurrentHostIp();
-    printf("The current mirror host ip is: %s\n", ip);
+    printf("The current mirror host ip is: '%s'\n", ip);
     if (registerOntoServer(ip, serverIp) < 0) {
         exit(-1);
     }
@@ -500,9 +501,8 @@ int main(int argc, char const *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Entering listening state now...\n");
+    printf("Entering listening state now...\n\n");
     while (1) {
-        printf("Waiting for accepting..\n");
         if ((socketConn = accept(server_fd, (struct sockaddr *) &address, (socklen_t *) &addrlen)) < 0) {
             perror("accept");
             exit(EXIT_FAILURE);
@@ -511,7 +511,6 @@ int main(int argc, char const *argv[]) {
         cleanBuffer(buffer);
 
         bytesRead = read(socketConn, buffer, BUFFER_LENGTH);
-        printf("Accepted a request from the queue..\n");
         processClient(socketConn, buffer, bytesRead);
     }
     return 0;

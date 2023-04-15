@@ -182,7 +182,7 @@ void cleanBuffer(char data[]) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
-    printf("input => %s\n", input_string); //todo del
+    printf("\n(%d) Processing command => '%s'\n", getpid(), input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     if (strcmp(words[0], "findfile") == 0) {
@@ -313,6 +313,7 @@ void process_command(int socket, char input_string[]) {
         //system("rm -f temp.tar.gz");
         //system("rm -f output.txt");
     }
+    printf("(%d) Processed command => '%s'\n", getpid(), input_string);
 }
 
 /**
@@ -357,8 +358,8 @@ void processClient(int socket, char buffer[], long int bytesRead) {
 }
 
 int main(int argc, char const *argv[]) {
-    int root = getpid();
-    printf("root pid: %d\n", root);
+    printf("**** WELCOME TO SERVER OF COMP-8567 PROJECT ****\n");
+    printf("Server started with process id: %d\n", getpid());
 
     generateFile(ffbn, "find_files_by_name.sh");
     generateFile(ffbe, "find_files_by_extension.sh");
@@ -395,9 +396,8 @@ int main(int argc, char const *argv[]) {
     }
 
     int connectionsServiced = 0;
-    printf("Entering listening state now...\n");
+    printf("Entering listening state now...\n\n");
     while (1) {
-        printf("Waiting for accepting..\n");
         if ((socketConn = accept(server_fd, (struct sockaddr *) &address, (socklen_t *) &addrlen)) < 0) {
             perror("accept");
             exit(EXIT_FAILURE);
@@ -419,10 +419,10 @@ int main(int argc, char const *argv[]) {
             }
 
             if (isMirrorDead) {
-                printf("Deregistered mirror ip as mirror is dead\n");
+                printf("Deregistered mirror ip as mirror is dead.\n");
                 cleanBufferWithLength(mirrorIp, strlen(mirrorIp));
             } else {
-                printf("Registered mirror ip as: %s, of length: %lu\n", mirrorIp, strlen(mirrorIp));
+                printf("Registered mirror ip as: %s, of length: %lu.\n", mirrorIp, strlen(mirrorIp));
             }
             send(socketConn, MIRROR_ACK, strlen(MIRROR_ACK), 0);
             close(socketConn);
@@ -430,7 +430,7 @@ int main(int argc, char const *argv[]) {
         }
 
         if (strlen(mirrorIp) == 0) {
-            printf("Cannot service client requests as mirror is yet not connected..\n");
+            printf("Cannot service client requests as mirror is yet not connected.\n");
             send(socketConn, REJECT_CLIENT, strlen(REJECT_CLIENT), 0);
             close(socketConn);
             continue;
@@ -439,13 +439,12 @@ int main(int argc, char const *argv[]) {
         connectionsServiced++;
         if (decideConnectionServer(connectionsServiced)) {
             //server will handle this request
-            printf("Accepted a request from the queue..\n");
             processClient(socketConn, buffer, bytesRead);
         } else {
             //mirror will handle this request
-            printf("Advising redirect to the client with the mirror address. Server will not service this request..\n");
+            printf("Advising redirect to the client with the mirror address. Server will not service this request.\n");
             send(socketConn, redirectMessageForClient, strlen(redirectMessageForClient), 0);
-            printf("Redirect command sent to client..\n");
+            printf("Redirect command sent to client.\n");
         }
         close(socketConn);
     }

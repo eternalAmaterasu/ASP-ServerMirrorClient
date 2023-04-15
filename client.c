@@ -441,7 +441,6 @@ int connectAndGetFd(char *serverIp, int port) {
         printf("\n Socket creation error \n");
         exit(-1);
     }
-    printf("Socket creation complete for client...\n");
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
@@ -451,9 +450,8 @@ int connectAndGetFd(char *serverIp, int port) {
         exit(-1);
     }
 
-    printf("Attempting contact now...\n");
     if ((connect(fdClient, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-        printf("\nConnection Failed \n");
+        printf("\nConnection establishment failed for %s:%d due to no running server / mirror\n", serverIp, port);
         exit(-1);
     }
     return fdClient;
@@ -472,6 +470,8 @@ int main(int argc, char const *argv[]) {
         printf("Cannot start client. Need server's IP address as the 1st parameter...\n");
         exit(0);
     }
+
+    printf("**** WELCOME TO CLIENT OF COMP-8567 PROJECT ****\n");
     char *serverIp = argv[1];
     //int *fdClient = NULL;
     int fdClient;
@@ -482,10 +482,10 @@ int main(int argc, char const *argv[]) {
     cleanBuffer(buffer);
     long int bytesReceived;
 
-    printf("Initiating server contact, with fdclient as %d...\n", fdClient);
+    printf("Initiating server contact...\n");
     send(fdClient, CLIENT_ACK, strlen(CLIENT_ACK), 0);
     bytesReceived = read(fdClient, buffer, 1024);
-    printf("client received %ld bytes with data being '%s'..\n", bytesReceived, buffer);
+    //printf("client received %ld bytes with data being '%s'..\n", bytesReceived, buffer);
 
     if (bytesReceived > 10 && bytesReceived < 25 && strncmp(mirrorRegistrationStartingMessage, buffer, 4) == 0) {
         close(fdClient);
@@ -493,17 +493,18 @@ int main(int argc, char const *argv[]) {
         for (int i = 0; i < IP_LENGTH && buffer[i + 4] != ';'; i++)
             mirrorIp[i] = buffer[i + 4];
 
-        printf("Rerouting to connect to the mirror...\n");
+        printf("\n*** Rerouting to connect to the mirror...\n");
         fdClient = connectAndGetFd(mirrorIp, MIRROR_PORT);
 
         send(fdClient, CLIENT_ACK, strlen(CLIENT_ACK), 0);
         cleanBuffer(buffer);
         bytesReceived = read(fdClient, buffer, 1024);
     } else if (strcmp(REJECT_CLIENT, buffer) == 0) {
-        printf("Client cannot start operation as server is not ready yet to accept connections, due to lack of mirror...\n");
+        printf("Client cannot start operation as server is not ready yet to accept connections due to lack of mirror...\n");
         exit(0);
     }
 
+    printf("Connected to server / mirror..\n");
     char input_string[1024];
     while (1) {
         cleanBuffer(input_string);
