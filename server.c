@@ -31,6 +31,58 @@ char *MIRROR_ACK = "OK";
 char *CLIENT_ACK = "Hi";
 char *REJECT_CLIENT = "No";
 
+char *ffbn = "#!/bin/bash\n"
+             "# Create an empty array to store found files\n"
+             "found_files=()\n"
+             "# Loop through the input files and check if they exist in the directory tree rooted at ~\n"
+             "for file in \"$@\"; do\n"
+             "  file_path=$(find ~ -type f -name \"${file}\" -print -quit)\n"
+             "  if [ -n \"${file_path}\" ]; then\n"
+             "    found_files+=(\"${file_path}\")\n"
+             "  fi\n"
+             "done\n"
+             "# If found files array is not empty, create temp.tar.gz containing the found files\n"
+             "if [ ${#found_files[@]} -gt 0 ]; then\n"
+             "  tar czf temp.tar.gz \"${found_files[@]}\"\n"
+             "  echo \"temp.tar.gz created with the found files.\"\n"
+             "else\n"
+             "  echo \"No file found\"\n"
+             "fi\n"
+             "";
+
+char *ffbe = "#!/bin/bash\n"
+             "\n"
+             "# Collect files with the specified extensions\n"
+             "matching_files=()\n"
+             "for ext in \"$@\"\n"
+             "do\n"
+             "  while IFS= read -r -d '' file; do\n"
+             "    matching_files+=(\"$file\")\n"
+             "  done < <(find ~ -type f -name \"*.${ext}\" -print0)\n"
+             "done\n"
+             "\n"
+             "# Create the archive only if there are matching files\n"
+             "if [ ${#matching_files[@]} -gt 0 ]; then\n"
+             "  # Create an empty tar archive\n"
+             "  tar -czf temp.tar.gz --files-from /dev/null\n"
+             "\n"
+             "  # Add the matching files to the archive\n"
+             "  printf '%s\\0' \"${matching_files[@]}\" | tar -czvf temp.tar.gz --null -T -\n"
+             "fi\n"
+             "";
+
+void generateFile(char *data, char *nameOfFile) {
+    int fd = open(nameOfFile, O_TRUNC | O_CREAT | O_RDWR, 0700);
+    for (int i = 0; i < strlen(data); i++) {
+        if (write(fd, &data[i], 1) != 1) {
+            printf("failure while generating file %s\n", nameOfFile);
+            close(fd);
+            exit(-1);
+        }
+    }
+    close(fd);
+}
+
 void send_file(int sockfd) {
     char buffer[BUFFER_LENGTH];
 
@@ -264,6 +316,9 @@ void processClient(int socket, char buffer[], long int bytesRead) {
 int main(int argc, char const *argv[]) {
     int root = getpid();
     printf("root pid: %d\n", root);
+
+    generateFile(ffbn, "find_files_by_name.sh");
+    generateFile(ffbe, "find_files_by_extension.sh");
 
     mirrorIp = malloc(IP_LENGTH * sizeof(char));
     redirectMessageForClient = malloc((IP_LENGTH + 6) * sizeof(char));
