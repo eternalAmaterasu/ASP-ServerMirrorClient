@@ -69,12 +69,16 @@ char *ffbe = "#!/bin/bash\n"
              "";
 
 /**
- *
+ * General function to generate the file on file system with name @param nameOfFile and data of file being @param data
  * @param data
  * @param nameOfFile
  */
 void generateFile(char *data, char *nameOfFile) {
     int fd = open(nameOfFile, O_TRUNC | O_CREAT | O_RDWR, 0700);
+    if (fd < 0) {
+        printf("Unable to open fd on the file %s\n", nameOfFile);
+        exit(-1);
+    }
     for (int i = 0; i < strlen(data); i++) {
         if (write(fd, &data[i], 1) != 1) {
             printf("failure while generating file %s\n", nameOfFile);
@@ -86,11 +90,10 @@ void generateFile(char *data, char *nameOfFile) {
 }
 
 /**
- *
- * @return
+ * Extract and return the current host IP which is required for registration onto server by mirror
+ * @return extracted IP
  */
 char *getCurrentHostIp() {
-    int IP_LENGTH = 25;
     char hostName[256];
     struct hostent *hostData;
     char *ip = malloc(IP_LENGTH * sizeof(char));
@@ -105,10 +108,10 @@ char *getCurrentHostIp() {
 }
 
 /**
- *
+ * General purpose function to connect and get the fd for @param serverIp and @param port -- for mirror registration and deregistration
  * @param serverIp
  * @param port
- * @return
+ * @return socket's client fd
  */
 int connectAndGetFd(char *serverIp, int port) {
     int fdClient;
@@ -134,7 +137,7 @@ int connectAndGetFd(char *serverIp, int port) {
 }
 
 /**
- *
+ * Fill the @param data[] with '\0' upto @param length
  * @param data
  * @param length
  */
@@ -143,7 +146,7 @@ void cleanBufferWithLength(char data[], int length) {
 }
 
 /**
- *
+ * Fill the @param data[] with '\0' upto BUFFER_LENGTH
  * @param data
  */
 void cleanBuffer(char data[]) {
@@ -151,10 +154,10 @@ void cleanBuffer(char data[]) {
 }
 
 /**
- *
+ * Register the mirror which has IP: @param hostIp onto the server which has IP: @param serverIp
  * @param hostIp
  * @param serverIp
- * @return
+ * @return 0 if server registration was successful, -1 if not
  */
 int registerOntoServer(char *hostIp, char *serverIp) {
     int ipLength = (int) strlen(hostIp);
@@ -163,7 +166,7 @@ int registerOntoServer(char *hostIp, char *serverIp) {
     int i = 0;
     for (; i < ipLength; i++) initMsg[i + 4] = hostIp[i];
     initMsg[i + 4] = ';';
-    printf("Data to send to server => '%s', length: %lu\n", initMsg, strlen(initMsg));
+    printf("\nRegistration data to send to server => '%s', length: %lu\n", initMsg, strlen(initMsg));
 
     int fd_mirror_client = connectAndGetFd(serverIp, SERVER_PORT);
     long int bytesReceived;
@@ -184,7 +187,7 @@ int registerOntoServer(char *hostIp, char *serverIp) {
 }
 
 /**
- *
+ * Deregister the mirror from the server as the mirror process was interrupted by SIGINT
  */
 void deregisterFromServer() {
     char lastMsg[20] = {NULL_CH};
@@ -202,7 +205,7 @@ void deregisterFromServer() {
 }
 
 /**
- *
+ * Send temp.tar.gz to the client via @param sockfd
  * @param sockfd
  */
 void send_file(int sockfd) {
@@ -278,7 +281,7 @@ void trim(char *str) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
-    printf("\n(%d) Processing command => '%s'\n", getpid(), input_string);
+    printf("\nProcessing command => '%s'\n", input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     if (strcmp(words[0], "findfile") == 0) {
@@ -409,19 +412,17 @@ void process_command(int socket, char input_string[]) {
         //system("rm -f temp.tar.gz");
         //system("rm -f output.txt");
     }
-    printf("(%d) Processed command => '%s'\n", getpid(), input_string);
+    printf("Processed command => '%s'\n", input_string);
 }
 
 /**
- *
+ * Handle client connection requests in a dedicated child process using @param socket
  * @param socket
- * @param buffer
- * @param bytesRead
  */
-void processClient(int socket, char buffer[], long int bytesRead) {
+void processClient(int socket) {
     int pid = fork();
     if (pid == 0) {
-        printf("\nSERVER(%d): Connected with client\n", getpid());
+        printf("\nConnected with client\n");
         //printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
         send(socket, CLIENT_ACK, strlen(CLIENT_ACK), 0);
         while (1) {
@@ -430,7 +431,7 @@ void processClient(int socket, char buffer[], long int bytesRead) {
             trim(input_string);
             if (strcmp(input_string, "quit") == 0) {
                 close(socket); // alert - added here
-                printf("\nSERVER(%d): Shutting down. Closing connection. \n", getpid());
+                printf("\nShutting down. Closing connection. \n");
                 exit(0);
             }
             process_command(socket, input_string);
@@ -445,7 +446,7 @@ void processClient(int socket, char buffer[], long int bytesRead) {
 }
 
 /**
- *
+ * SIGINT handler
  */
 void handleInterrupt() {
     deregisterFromServer();
@@ -471,7 +472,7 @@ int main(int argc, char const *argv[]) {
     }
     serverIpInstance = malloc(strlen(serverIp) * sizeof(char));
     strcpy(serverIpInstance, serverIp);
-    signal(SIGINT, handleInterrupt);
+    signal(SIGINT, handleInterrupt); //register SIGINT handler
 
     int server_fd, socketConn;
     long int bytesRead;
@@ -511,7 +512,7 @@ int main(int argc, char const *argv[]) {
         cleanBuffer(buffer);
 
         bytesRead = read(socketConn, buffer, BUFFER_LENGTH);
-        processClient(socketConn, buffer, bytesRead);
+        processClient(socketConn);
     }
     return 0;
 }

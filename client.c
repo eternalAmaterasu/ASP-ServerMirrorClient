@@ -21,7 +21,7 @@ char *CLIENT_ACK = "Hi";
 char *REJECT_CLIENT = "No";
 
 /**
- *
+ * Receive the temp.tar.gz from server / mirror as temp_client.tar.gz using socket @param sockfd
  * @param sockfd
  */
 void receive_file(int sockfd) {
@@ -427,10 +427,10 @@ char *check_command(char input_string[], char *command) // returns command name 
 }
 
 /**
- *
- * @param serverIp
+ * General purpose function to connect and get the fd for @param serverIp and @param port -- for server and mirror connection
+ * @param serverIp -- can be server ip or the mirror ip, depending on the scenario
  * @param port
- * @return
+ * @return socket's client fd
  */
 int connectAndGetFd(char *serverIp, int port) {
     int fdClient;
@@ -458,7 +458,7 @@ int connectAndGetFd(char *serverIp, int port) {
 }
 
 /**
- *
+ * Fill the @param data[] with '\0' upto BUFFER_LENGTH
  * @param data
  */
 void cleanBuffer(char data[]) {

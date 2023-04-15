@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #define SERVER_PORT 8080
 #define MIRROR_PORT 8081
@@ -72,12 +73,16 @@ char *ffbe = "#!/bin/bash\n"
              "";
 
 /**
- *
+ * General function to generate the file on file system with name @param nameOfFile and data of file being @param data
  * @param data
  * @param nameOfFile
  */
 void generateFile(char *data, char *nameOfFile) {
     int fd = open(nameOfFile, O_TRUNC | O_CREAT | O_RDWR, 0700);
+    if (fd < 0) {
+        printf("Unable to open fd on the file %s\n", nameOfFile);
+        exit(-1);
+    }
     for (int i = 0; i < strlen(data); i++) {
         if (write(fd, &data[i], 1) != 1) {
             printf("failure while generating file %s\n", nameOfFile);
@@ -89,7 +94,7 @@ void generateFile(char *data, char *nameOfFile) {
 }
 
 /**
- *
+* Send temp.tar.gz to the client via @param sockfd
  * @param sockfd
  */
 void send_file(int sockfd) {
@@ -158,7 +163,7 @@ void trim(char *str) {
 }
 
 /**
- *
+ * Fill the @param data[] with '\0' upto @param length
  * @param data
  * @param length
  */
@@ -167,7 +172,7 @@ void cleanBufferWithLength(char data[], int length) {
 }
 
 /**
- *
+ * Fill the @param data[] with '\0' upto BUFFER_LENGTH
  * @param data
  */
 void cleanBuffer(char data[]) {
@@ -182,7 +187,7 @@ void cleanBuffer(char data[]) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
-    printf("\n(%d) Processing command => '%s'\n", getpid(), input_string);
+    printf("\nProcessing command => '%s'\n", input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     if (strcmp(words[0], "findfile") == 0) {
@@ -313,11 +318,11 @@ void process_command(int socket, char input_string[]) {
         //system("rm -f temp.tar.gz");
         //system("rm -f output.txt");
     }
-    printf("(%d) Processed command => '%s'\n", getpid(), input_string);
+    printf("Processed command => '%s'\n", input_string);
 }
 
 /**
- *
+ * Critical load balancing computation on basis of @param connectionNumber, which returns 1 if the server is to handle the client connection, 0 if it's mirror's turn
  * @param connectionNumber
  * @return
  */
@@ -326,15 +331,13 @@ int decideConnectionServer(int connectionNumber) {
 }
 
 /**
- *
+ * Handle client connection requests in a dedicated child process using @param socket
  * @param socket
- * @param buffer
- * @param bytesRead
  */
-void processClient(int socket, char buffer[], long int bytesRead) {
+void processClient(int socket) {
     int pid = fork();
     if (pid == 0) {
-        printf("\nSERVER(%d): Connected with client\n", getpid());
+        printf("\nConnected with client\n");
         //printf("%d => %ld bytes read. String => '%s'\n", getpid(), bytesRead, buffer);
         send(socket, CLIENT_ACK, strlen(CLIENT_ACK), 0);
         while (1) {
@@ -343,7 +346,7 @@ void processClient(int socket, char buffer[], long int bytesRead) {
             trim(input_string);
             if (strcmp(input_string, "quit") == 0) {
                 close(socket); // alert - added here
-                printf("\nSERVER(%d): Shutting down. Closing connection. \n", getpid());
+                printf("\nShutting down. Closing connection. \n");
                 exit(0);
             }
             process_command(socket, input_string);
@@ -439,7 +442,7 @@ int main(int argc, char const *argv[]) {
         connectionsServiced++;
         if (decideConnectionServer(connectionsServiced)) {
             //server will handle this request
-            processClient(socketConn, buffer, bytesRead);
+            processClient(socketConn);
         } else {
             //mirror will handle this request
             printf("Advising redirect to the client with the mirror address. Server will not service this request.\n");
