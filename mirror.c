@@ -281,6 +281,8 @@ void process_command(int socket, char input_string[]) {
     printf("\nProcessing command => '%s'\n", input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
+    //system("rm -f temp.tar.gz");
+    //system("rm -f output.txt");
     if (strcmp(words[0], "findfile") == 0) {
         char command[1024] = {0};
         //printf("\nSearch Filename %s\n",words[1]);
@@ -322,7 +324,7 @@ void process_command(int socket, char input_string[]) {
         }
         pclose(pipe);
         send_file(socket);
-        //system("rm -f temp.tar.gz");
+
     } else if (strcmp(words[0], "dgetfiles") == 0) {
         char command[1024] = {0};
         printf("\nDate1 %s Date2 %s\n", words[1], words[2]);
@@ -336,7 +338,7 @@ void process_command(int socket, char input_string[]) {
         }
         pclose(pipe);
         send_file(socket);
-        //system("rm -f temp.tar.gz");
+
     } else if (strcmp(words[0], "getfiles") == 0) {
         system("chmod +x ./find_files_by_name.sh");
         char command[1024] = {0};
@@ -367,8 +369,7 @@ void process_command(int socket, char input_string[]) {
             char msg[] = "No file found";
             send(socket, msg, strlen(msg), 0);
         }
-        //system("rm -f temp.tar.gz");
-        //system("rm -f output.txt");
+
     } else if (strcmp(words[0], "gettargz") == 0) {
         system("chmod +x ./find_files_by_extension.sh");
         char command[1024] = {0};
@@ -399,8 +400,7 @@ void process_command(int socket, char input_string[]) {
             char msg[] = "No file found";
             send(socket, msg, strlen(msg), 0);
         }
-        //system("rm -f temp.tar.gz");
-        //system("rm -f output.txt");
+
     }
     printf("Processed command => '%s'\n", input_string);
 }
