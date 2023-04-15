@@ -633,6 +633,7 @@ int main(int argc, char const *argv[]) {
                 if (strcmp(buffer, "File found") == 0) {
                     receive_file(fdClient);
                     if (strcmp(command, "getfilesu") == 0) {
+                        system("rm -rf home"); //removing the home folder created due to previous unzipping
                         char unzip_command[1024] = {0};
                         printf("\nExtracting temp_client.tar.gz file\n");
                         snprintf(unzip_command, sizeof(unzip_command), "tar -xzf temp_client.tar.gz");
@@ -654,6 +655,7 @@ int main(int argc, char const *argv[]) {
                 if (strcmp(buffer, "File found") == 0) {
                     receive_file(fdClient);
                     if (strcmp(command, "gettargzu") == 0) {
+                        system("rm -rf home"); //removing the home folder created due to previous unzipping
                         char unzip_command[1024] = {0};
                         printf("\nExtracting temp_client.tar.gz file\n");
                         snprintf(unzip_command, sizeof(unzip_command), "tar -xzf temp_client.tar.gz");
