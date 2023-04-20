@@ -187,7 +187,7 @@ void cleanBuffer(char data[]) {
 void process_command(int socket, char input_string[]) {
     char output_message[2056];
     trim(input_string);
-    printf("\nProcessing command => '%s'\n", input_string);
+    //printf("\nProcessing command => '%s'\n", input_string);
     char words[MAX_WORDS][MAX_WORD_LENGTH];
     int word_count = split_words(input_string, words);
     //system("rm -f temp.tar.gz");
@@ -311,7 +311,7 @@ void process_command(int socket, char input_string[]) {
         }
 
     }
-    printf("Processed command => '%s'\n", input_string);
+    //printf("Processed command => '%s'\n", input_string);
 }
 
 /**

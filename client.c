@@ -245,6 +245,7 @@ int check_dgetfiles(char input_string[]) // returns 1 if invalid syntax, returns
                 time_t date1_time = mktime(&date1);
                 time_t date2_time = mktime(&date2);
                 if (date1_time <= date2_time) {
+                    if (strlen(optional_flag) == 0) return 2;
                     if (strcmp(optional_flag, "-u") != 0) {
                     	printf("\nIncorrect optional flag\n");
                         return 1;
